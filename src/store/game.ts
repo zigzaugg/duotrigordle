@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { NUM_BOARDS, NUM_GUESSES, WORDS_VALID } from "../consts";
-import { allWordsGuessed, getTargetWords, range } from "../funcs";
+import { allWordsGuessed, getTargetWords, MersenneTwister, range } from "../funcs";
 
 // Don't forget to update corresponding shape checks in funcs.ts
 // if you add/remove fields
@@ -87,9 +87,35 @@ const gameSlice = createSlice({
         state.endTime = action.payload.timestamp;
       }
     },
+    inputCtrlEnter: (state, action: PayloadAction<{ timestamp: number }>) => {
+      if (state.gameOver) return state;
+
+      const guess = state.input;
+      state.input = "";
+      if (!WORDS_VALID.has(guess)) {
+        return state;
+      }
+      state.guesses = [guess];
+      state.practice = true;
+      // Start timer on first guess
+      if (state.guesses.length === 1) {
+        state.startTime = action.payload.timestamp;
+      }
+
+      var count = 0;
+      while(!state.targets.includes(guess) && count < 10000){
+        count++;
+        state.id = MersenneTwister().u32();
+        state.targets = getTargetWords(state.id);
+      }
+      console.log("You saved typing "+guess+" "+count+" times.");
+      if (count === 10000) {
+        console.log("No hit after 10000 attempts. Start a new game and try again.");
+      }
+    },
   },
 });
 
-export const { inputBackspace, inputEnter, inputLetter, loadGame, startGame } =
+export const { inputBackspace, inputEnter, inputCtrlEnter, inputLetter, loadGame, startGame } =
   gameSlice.actions;
 export const gameReducer = gameSlice.reducer;

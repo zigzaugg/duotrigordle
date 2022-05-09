@@ -1,5 +1,5 @@
 import cn from "classnames";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import fullscreenExitSvg from "../assets/fullscreen-exit.svg";
 import fullscreenSvg from "../assets/fullscreen.svg";
@@ -7,7 +7,6 @@ import helpSvg from "../assets/help.svg";
 import settingsSvg from "../assets/settings.svg";
 import statsSvg from "../assets/stats.svg";
 import { NUM_BOARDS, NUM_GUESSES } from "../consts";
-import { formatTimeElapsed, MersenneTwister } from "../funcs";
 import { loadGameFromLocalStorage } from "../serialize";
 import {
   showAboutPopup,
@@ -16,6 +15,10 @@ import {
   startGame,
   useSelector,
 } from "../store";
+import {
+  formatTimeElapsed,
+  MersenneTwister,
+} from "../funcs";
 
 // Declare typescript definitions for safari fullscreen stuff
 declare global {
@@ -85,14 +88,32 @@ export default function Header() {
   };
   const handleNewClick = () => {
     newRef.current?.blur();
-    const res = window.confirm(
-      "Are you sure you want to start a new practice duotrigordle?\n" +
-        "(Your current progress will be lost)"
-    );
-    if (!res) return;
+    //Who needs to prompt to restart? Just do it.
+    // const res = window.confirm(
+    //   "Are you sure you want to start a new practice duotrigordle?\n" +
+    //     "(Your current progress will be lost)"
+    // );
+    // if (!res) return;
     const id = MersenneTwister().u32();
     dispatch(startGame({ id, practice: true }));
   };
+
+  const handleKeyPress = useCallback((event) => {
+    // check if the Shift key is pressed
+    if (event.key === '`') {
+      handleNewClick();
+    }
+  }, [handleNewClick]);
+
+  useEffect(() => {
+    // attach the event listener
+    document.addEventListener('keydown', handleKeyPress);
+
+    // remove the event listener
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [handleKeyPress]);
   const handleBackClick = () => {
     backRef.current?.blur();
     const res = window.confirm(

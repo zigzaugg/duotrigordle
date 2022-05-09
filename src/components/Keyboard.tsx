@@ -2,7 +2,7 @@ import cn from "classnames";
 import { CSSProperties, useEffect, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { getGuessColors, range } from "../funcs";
-import { inputBackspace, inputEnter, inputLetter, useSelector } from "../store";
+import { inputBackspace, inputEnter, inputCtrlEnter, inputLetter, useSelector } from "../store";
 
 const ALPHABET = new Set([
   "A",
@@ -42,12 +42,14 @@ export default function Keyboard(props: KeyboardProps) {
 
   useEffect(() => {
     const handler = (k: KeyboardEvent) => {
-      if (k.ctrlKey || k.metaKey || k.altKey) {
+      if (k.metaKey || k.altKey) {
         return;
       }
       const key = k.key.toUpperCase();
       if (key === "BACKSPACE") {
         dispatch(inputBackspace());
+      } else if (key === "ENTER" && k.getModifierState("Control")) {
+        dispatch(inputCtrlEnter({ timestamp: new Date().getTime() }));
       } else if (key === "ENTER") {
         dispatch(inputEnter({ timestamp: new Date().getTime() }));
       } else if (ALPHABET.has(key)) {
